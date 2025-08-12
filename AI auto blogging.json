@@ -1,0 +1,125 @@
+{
+  "name": "AI auto blogging",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -256,
+        -560
+      ],
+      "id": "b2190453-2faf-4a56-931c-19af12e8a7f2",
+      "name": "When chat message received",
+      "webhookId": "fc0bd26c-8e1d-4234-aafa-b141f007b681"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Generate a blog post. Provide the title on the first line and the full content on the second line. Do not include any extra text or formatting.\ntitle\ncontent\nthe content should contain 3 seperate paragraphs ranging fro 800-1200 words.\n",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        -32,
+        -560
+      ],
+      "id": "544ba2e9-6ae0-4b5d-8e8e-66fe863a6792",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -32,
+        -384
+      ],
+      "id": "c41a8828-7db0-464a-93c4-0dbdfc753a6d",
+      "name": "Google Gemini Chat Model",
+      "notesInFlow": false,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "IK9gnChbhwLOjNXr",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "issmouli2003@gmail.com",
+        "subject": "Todays Blog",
+        "message": "=<strong>Title:</strong> {{ $('When chat message received').item.json.chatInput }}<br>\n<strong>Content:</strong> {{ $json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        384,
+        -560
+      ],
+      "id": "0edb13b0-4da5-4388-ad4d-147a8a322a95",
+      "name": "Send a message",
+      "webhookId": "efa8a9c2-1773-4a83-b618-dfb9655593eb",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "R5bawA910srpiBuh",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "3861adb4-5d25-4109-8955-d4b35d1b6f6e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "3d5a40dd68ee280f3e7c1ab8fdd5c5b986aae9e309b3df6df10695c3d08d240b"
+  },
+  "id": "8A9l34qXuKegmzvq",
+  "tags": []
+}
