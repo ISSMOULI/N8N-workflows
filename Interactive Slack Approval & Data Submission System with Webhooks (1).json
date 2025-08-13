@@ -1,0 +1,163 @@
+{
+  "name": "Interactive Slack Approval & Data Submission System with Webhooks",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "874768ff-6631-42a8-8c49-25b63ead3fec",
+        "authentication": "basicAuth",
+        "options": {}
+      },
+      "id": "b62c6302-387e-4ef3-af4c-92c87fdfef1b",
+      "name": "n8n Data Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        880,
+        352
+      ],
+      "webhookId": "874768ff-6631-42a8-8c49-25b63ead3fec",
+      "typeVersion": 2,
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "QndeWi7fen0HMs5w",
+          "name": "Unnamed credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "A12B1C1DEFG"
+        },
+        "text": "=Data Input 📥 : {{$json.body.data || $json.data || 'No data provided'}}\n\n✅ Data received and processed successfully! Your automation request has been submitted.",
+        "otherOptions": {}
+      },
+      "id": "6e22fc14-5eb0-4dab-944f-e527b10292a2",
+      "name": "Slack - Data Acknowledgment",
+      "type": "n8n-nodes-base.slack",
+      "position": [
+        1088,
+        352
+      ],
+      "webhookId": "16b35492-6886-4319-ade7-eca8ef1a141b",
+      "typeVersion": 2.3,
+      "credentials": {
+        "slackApi": {
+          "id": "vBGUB1SbmUpdepka",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "fa872cfc-abe3-481d-ab7c-74f78d83a070",
+        "authentication": "basicAuth",
+        "options": {}
+      },
+      "id": "48d837e7-626e-472b-b528-8b75ad2d86a5",
+      "name": "n8n Button Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        880,
+        624
+      ],
+      "webhookId": "fa872cfc-abe3-481d-ab7c-74f78d83a070",
+      "typeVersion": 2,
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "QndeWi7fen0HMs5w",
+          "name": "Unnamed credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "// Process approval/rejection action\nconst webhookData = items[0].json;\n\n// Extract data from the webhook payload\nconst body = webhookData.body || webhookData;\nconst action = body.action;\nconst user = body.user || {};\nconst timestamp = body.timestamp || Date.now();\n\n// Create response based on action\nlet message = '';\nlet emoji = '';\nlet status = '';\n\nconst userDisplayName = user.name || user.id || 'Unknown User';\n\nif (action === 'approve') {\n  emoji = '✅';\n  status = 'APPROVED';\n  message = `${emoji} *Request ${status}*\\n\\n` +\n           `👤 *Approved by:* ${userDisplayName}\\n` +\n           `⏰ *Time:* ${new Date(timestamp).toLocaleString()}\\n` +\n           `🎯 *Action:* Request has been processed successfully and approved for execution.\\n` +\n           `📋 *Next Steps:* The automation workflow will proceed with the approved action.`;\n} else if (action === 'reject') {\n  emoji = '❌';\n  status = 'REJECTED';\n  message = `${emoji} *Request ${status}*\\n\\n` +\n           `👤 *Rejected by:* ${userDisplayName}\\n` +\n           `⏰ *Time:* ${new Date(timestamp).toLocaleString()}\\n` +\n           `🚫 *Action:* Request has been rejected and will not be processed.\\n` +\n           `📋 *Next Steps:* No further action will be taken for this request.`;\n} else {\n  emoji = '⚠️';\n  status = 'UNKNOWN';\n  message = `${emoji} *Unknown Action Received*\\n\\n` +\n           `👤 *User:* ${userDisplayName}\\n` +\n           `⏰ *Time:* ${new Date(timestamp).toLocaleString()}\\n` +\n           `❓ *Action:* ${action || 'undefined'}\\n` +\n           `📋 *Status:* Unable to process this action type.`;\n}\n\n// Return processed data\nreturn [{\n  json: {\n    ...webhookData,\n    processedMessage: message,\n    emoji: emoji,\n    status: status,\n    processedAt: new Date().toISOString()\n  }\n}];\n"
+      },
+      "id": "16390c39-acbd-437a-ae90-be702e67bed6",
+      "name": "Process Button Action",
+      "type": "n8n-nodes-base.function",
+      "position": [
+        1088,
+        624
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "A12B1C1DEFG"
+        },
+        "text": "={{$json.processedMessage}}",
+        "otherOptions": {}
+      },
+      "id": "bbb48629-5773-42d6-a3f7-10f87fbb439c",
+      "name": "Slack - Button Acknowledgment",
+      "type": "n8n-nodes-base.slack",
+      "position": [
+        1312,
+        624
+      ],
+      "webhookId": "16b35492-6886-4319-ade7-eca8ef1a141b",
+      "typeVersion": 2.3,
+      "credentials": {
+        "slackApi": {
+          "id": "vBGUB1SbmUpdepka",
+          "name": "Slack account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "n8n Data Webhook": {
+      "main": [
+        [
+          {
+            "node": "Slack - Data Acknowledgment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "n8n Button Webhook": {
+      "main": [
+        [
+          {
+            "node": "Process Button Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Button Action": {
+      "main": [
+        [
+          {
+            "node": "Slack - Button Acknowledgment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "dbf9132b-982f-4b74-a1d1-5f971e518fbf",
+  "meta": {
+    "templateId": "5049",
+    "instanceId": "3d5a40dd68ee280f3e7c1ab8fdd5c5b986aae9e309b3df6df10695c3d08d240b"
+  },
+  "id": "FdwmUivb7WD3eRUX",
+  "tags": []
+}
