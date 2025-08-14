@@ -1,0 +1,122 @@
+{
+  "name": "daily jokes",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "3202a0f5-47f5-4639-b497-9ab08176e921",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "url": "https://official-joke-api.appspot.com/random_joke",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "aeef2f89-10c0-4630-bb6a-85d3da491e84",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "46b52bf5-7cb8-4b09-a251-8d163b56a3bb",
+              "name": "body",
+              "value": "=Hey I have a joke for you : \n{{ $json.setup }} \n\n{{ $json.punchline }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        416,
+        0
+      ],
+      "id": "5a134e97-8101-4a42-ae6b-319d017a369a",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "chatId": "7337215541",
+        "text": "={{ $json.body }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        624,
+        0
+      ],
+      "id": "76b4127d-fecc-4fd7-8974-b98ef81eae6d",
+      "name": "Send a text message",
+      "webhookId": "87da898e-2d06-434f-9990-a0665365de3a",
+      "credentials": {
+        "telegramApi": {
+          "id": "BbQIelvcxGUcbrHz",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d18a0e40-548d-45b8-ba68-5acbf00e6dcc",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "3d5a40dd68ee280f3e7c1ab8fdd5c5b986aae9e309b3df6df10695c3d08d240b"
+  },
+  "id": "Giuj2JxHqwYDbbBx",
+  "tags": []
+}
