@@ -1,0 +1,131 @@
+{
+  "name": "daily motivation quote",
+  "nodes": [
+    {
+      "parameters": {
+        "url": "=https://zenquotes.io/api/random",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "cfb2fe0c-8853-4edc-9dc2-1d4c6f6723ec",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e2a920f8-9734-40a8-994c-8104ff921553",
+              "name": "body",
+              "value": "={{ $json.q }} - {{ $json.a }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        416,
+        0
+      ],
+      "id": "3a117a76-766b-4626-b103-d131b9be2980",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "sendTo": "mouli2003charan2007@gmail.com",
+        "subject": "Your Daily Quote",
+        "message": "=Good morning!  \n\n{{ $('HTTP Request').item.json.q }} \n— {{ $('HTTP Request').item.json.a }} \n\nHave a wonderful day!",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        624,
+        0
+      ],
+      "id": "dcc2020e-d538-4d9f-bee7-7b5472063f87",
+      "name": "Send a message",
+      "webhookId": "6b166874-7414-426d-87a7-78aeac77065d",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "R5bawA910srpiBuh",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 6
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "ecb9d65f-9f5a-4337-959f-75990b7a2fa9",
+      "name": "Schedule Trigger"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "0e90e08d-416e-4025-807f-f4472f1f5500",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "3d5a40dd68ee280f3e7c1ab8fdd5c5b986aae9e309b3df6df10695c3d08d240b"
+  },
+  "id": "JSFQuIIvkPmpUSHC",
+  "tags": []
+}
