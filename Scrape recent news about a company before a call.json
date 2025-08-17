@@ -1,0 +1,305 @@
+{
+  "name": "Scrape recent news about a company before a call",
+  "nodes": [
+    {
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "apiKey",
+              "stringValue": "32aa914c947342169c4998b6701a77e0"
+            },
+            {
+              "name": "newsAge",
+              "type": "numberValue",
+              "numberValue": "10"
+            },
+            {
+              "name": "maxArticles",
+              "stringValue": "20"
+            },
+            {
+              "name": "emails"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "9aa9fa6c-5ccb-4f2b-b6a8-2b91f4a58355",
+      "name": "Setup",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        592,
+        608
+      ],
+      "typeVersion": 3.2
+    },
+    {
+      "parameters": {
+        "fields": {
+          "values": [
+            {
+              "name": "companyName",
+              "stringValue": "={{ $json.summary.toLowerCase().replace('meeting with', '').replace('call with', '').trim() }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "6f471217-b69b-4f67-981d-c7c1e2d710b6",
+      "name": "Extract company name",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        1280,
+        400
+      ],
+      "typeVersion": 3.2
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 7
+            }
+          ]
+        }
+      },
+      "id": "ddfa92e0-ff37-4733-9002-65fe21989d8a",
+      "name": "Every morning @ 7",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        368,
+        608
+      ],
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          },
+          "combinator": "or",
+          "conditions": [
+            {
+              "id": "bcfb06b1-d365-43a8-9802-869529baca98",
+              "operator": {
+                "type": "string",
+                "operation": "startsWith"
+              },
+              "leftValue": "={{ $json.summary.toLowerCase() }}",
+              "rightValue": "call with"
+            },
+            {
+              "id": "4ea43ccf-d586-4985-87db-fc1e9f734351",
+              "operator": {
+                "type": "string",
+                "operation": "startsWith"
+              },
+              "leftValue": "={{ $json.summary.toLowerCase() }}",
+              "rightValue": "meeting with"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b71c3683-6077-41b4-ab23-66ee22f64532",
+      "name": "Filter meetings",
+      "type": "n8n-nodes-base.if",
+      "position": [
+        1008,
+        608
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "url": "=https://newsapi.org/v2/everything?apiKey={{ $('Setup').first().json.apiKey }}&q={{ $json.companyName }}&from={{ DateTime.now().minus({ days: $('Setup').first().json.newsAge }).toFormat('yyyy-MM-dd') }}&sortBy=publishedAt&language=en&pageSize={{ $('Setup').first().json.maxArticles }}&searchIn=title",
+        "options": {}
+      },
+      "id": "34c4241e-e29a-4d9a-b8a8-130b9f19383f",
+      "name": "Get latest news",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        1472,
+        400
+      ],
+      "typeVersion": 4.1
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "let html = `<table style=\"width: 100%\">`;\nhtml += '</table>';\n\nfor(article of $input.item.json.articles) {\n  console.log(article)\n  html += `\n    <tr>\n      <td style=\"display: flex; background-color: #f2f4f8; font-family: sans-serif; padding: 0.3em 0.5em\">\n        <div style=\"padding: 1em\">\n          <a style=\"display: block; margin-bottom: 10px; font-size: 1.2em\" href=\"${article.url}\">${article.title}</a>\n          <i>\n            ${article.description ? article.description : article.content}\n          </i>\n          <div style=\"margin-top: 1em\">\n            ${ article.source?.name ? '<b>Source:</b> ' + article.source?.name : '' }\n          </div>\n        </div>\n      </td>\n    </tr>\n  `\n}\nreturn { \"html\": html };"
+      },
+      "id": "51059db7-5fec-4287-bf3f-a6a4e76ac5a4",
+      "name": "Format for email",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        1680,
+        400
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Setup').first().json.emails }}",
+        "subject": "=Latest news for '{{ $('Extract company name').item.json.summary }}'",
+        "message": "={{ $json.html }}",
+        "options": {}
+      },
+      "id": "9b4351a8-edf9-49ef-829e-6998cb1eea2c",
+      "name": "Send news",
+      "type": "n8n-nodes-base.gmail",
+      "position": [
+        1872,
+        400
+      ],
+      "typeVersion": 2.1,
+      "webhookId": "e979c217-7107-4c74-a887-2d0f6016abfa",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "FlOXV8Q6nBIsnXIw",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "318b2bdc-712f-42a8-b224-8f0dc2c9c4e5",
+      "name": "No meetings today",
+      "type": "n8n-nodes-base.noOp",
+      "position": [
+        1872,
+        624
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "resource": "calendar",
+        "calendar": {
+          "__rl": true,
+          "value": "saiganesh.kodryx@gmail.com",
+          "mode": "list",
+          "cachedResultName": "saiganesh.kodryx@gmail.com"
+        },
+        "timeMin": "2025-08-11T00:00:00",
+        "timeMax": "2025-08-11T17:31:00",
+        "options": {}
+      },
+      "id": "96b075cd-5c16-453e-93a6-348b22b704bb",
+      "name": "Get meetings for today",
+      "type": "n8n-nodes-base.googleCalendar",
+      "position": [
+        832,
+        608
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "sjH5eEPzkuoPEv4C",
+          "name": "Google Calendar account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Setup": {
+      "main": [
+        [
+          {
+            "node": "Get meetings for today",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter meetings": {
+      "main": [
+        [
+          {
+            "node": "Extract company name",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No meetings today",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get latest news": {
+      "main": [
+        [
+          {
+            "node": "Format for email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format for email": {
+      "main": [
+        [
+          {
+            "node": "Send news",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Every morning @ 7": {
+      "main": [
+        [
+          {
+            "node": "Setup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract company name": {
+      "main": [
+        [
+          {
+            "node": "Get latest news",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get meetings for today": {
+      "main": [
+        [
+          {
+            "node": "Filter meetings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "0bb0ec04-2cb6-41f1-98b4-1c6c2f324d49",
+  "meta": {
+    "templateId": "2110",
+    "instanceId": "1c3a870067f9dc57ab4ca188ce43e7cb5354de45bb5bb61a99551eef2995d022"
+  },
+  "id": "VjByfhSxiuSIPdf2",
+  "tags": []
+}
