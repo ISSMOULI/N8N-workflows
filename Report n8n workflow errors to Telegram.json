@@ -1,0 +1,96 @@
+{
+  "name": "🚨 Report n8n workflow errors to Telegram",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "aa84d631-c14f-45c2-a659-454605e83c30",
+      "name": "On Error",
+      "type": "n8n-nodes-base.errorTrigger",
+      "position": [
+        448,
+        448
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "message",
+              "value": "=⚠️ Workflow `{{$json[\"workflow\"][\"name\"]}}` failed to run! [execution]({{ $json.execution.url }})"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "abffce17-cc93-4c6a-8955-de2d0f4cc885",
+      "name": "Set message",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        720,
+        448
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "chatId": "1326678566",
+        "text": "={{ $json.message }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "845ddf26-2d40-4cc6-843b-ccb3b365fbfb",
+      "name": "Send a text message",
+      "type": "n8n-nodes-base.telegram",
+      "position": [
+        928,
+        448
+      ],
+      "typeVersion": 1.1,
+      "webhookId": "4d1e0424-ebbf-494b-bc56-c8c7c855701a",
+      "credentials": {
+        "telegramApi": {
+          "id": "ZQa7WDELiQTcVZVF",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On Error": {
+      "main": [
+        [
+          {
+            "node": "Set message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set message": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "versionId": "c300e356-4150-4ba5-8f99-393736d42f68",
+  "meta": {
+    "templateId": "2159",
+    "instanceId": "1c3a870067f9dc57ab4ca188ce43e7cb5354de45bb5bb61a99551eef2995d022"
+  },
+  "id": "q0WCGLLYS9uTaKTY",
+  "tags": []
+}
