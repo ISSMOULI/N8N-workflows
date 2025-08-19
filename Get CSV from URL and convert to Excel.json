@@ -1,0 +1,119 @@
+{
+  "name": "Get CSV from URL and convert to Excel",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "580d8a47-32cc-4976-a464-793523ae3d1e",
+      "name": "When clicking \"Execute Workflow\"",
+      "type": "n8n-nodes-base.manualTrigger",
+      "position": [
+        416,
+        448
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "fileFormat": "csv",
+        "options": {
+          "delimiter": ";",
+          "headerRow": true
+        }
+      },
+      "id": "2ca1b012-db79-415a-8983-53ac23cd42d1",
+      "name": "Import CSV",
+      "type": "n8n-nodes-base.spreadsheetFile",
+      "position": [
+        816,
+        448
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "url": "https://opendata.potsdam.de/api/v2/catalog/datasets/veranstaltungsplaetze-potsdam/exports/csv",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "5bc0a423-91bc-4b52-af05-2869223bbbff",
+      "name": "Download CSV",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        608,
+        448
+      ],
+      "typeVersion": 4.1
+    },
+    {
+      "parameters": {
+        "operation": "toFile",
+        "fileFormat": "xlsx",
+        "options": {
+          "fileName": "=converted_csv.{{ $parameter.fileFormat }}",
+          "headerRow": true,
+          "sheetName": "csv_page"
+        }
+      },
+      "id": "d403206d-e53c-44d7-b39e-361fa8fc3a23",
+      "name": "Convert to Excel",
+      "type": "n8n-nodes-base.spreadsheetFile",
+      "position": [
+        1008,
+        448
+      ],
+      "typeVersion": 2
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Import CSV": {
+      "main": [
+        [
+          {
+            "node": "Convert to Excel",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download CSV": {
+      "main": [
+        [
+          {
+            "node": "Import CSV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking \"Execute Workflow\"": {
+      "main": [
+        [
+          {
+            "node": "Download CSV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "c8af173a-4307-450f-877d-7689408eec6b",
+  "meta": {
+    "templateId": "2041",
+    "instanceId": "1c3a870067f9dc57ab4ca188ce43e7cb5354de45bb5bb61a99551eef2995d022"
+  },
+  "id": "ka58EBTFtCx1boe3",
+  "tags": []
+}
