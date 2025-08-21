@@ -1,0 +1,945 @@
+{
+  "name": "FaceLessVideo",
+  "nodes": [
+    {
+      "parameters": {
+        "inputDataFieldName": "wav",
+        "name": "=faceless-video-audio-{{ $now.toISO() }}",
+        "driveId": {
+          "__rl": true,
+          "value": "My Drive",
+          "mode": "list",
+          "cachedResultName": "My Drive",
+          "cachedResultUrl": "https://drive.google.com/drive/my-drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "={{ $('Create folder').item.json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "id": "eb321e7e-c195-4143-b806-d89617771280",
+      "name": "Upload Audio to Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "position": [
+        720,
+        -160
+      ],
+      "typeVersion": 3,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "ahdhr0CaEUl0DyfA",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {
+          "includeUnpaired": true
+        }
+      },
+      "id": "e3f74496-0f73-400a-a12b-d48f9a4b3182",
+      "name": "Merge",
+      "type": "n8n-nodes-base.merge",
+      "position": [
+        1168,
+        -256
+      ],
+      "typeVersion": 3
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"array\",\n  \"items\": {\n    \"type\": \"object\",\n    \"properties\": {\n      \"start_time\": {\n        \"type\": \"number\"\n      },\n      \"end_time\": {\n        \"type\": \"number\"\n      },\n       \"duration\": {\n        \"type\": \"number\"\n      },\n      \"prompt\": {\n        \"type\": \"string\"\n      }\n    },\n    \"required\": [\"start_time_seconds\", \"end_time_seconds\", \"prompt\"]\n  }\n}\n"
+      },
+      "id": "9d104130-3fba-4bb6-ac12-726ad4e857ee",
+      "name": "Structured Output Parser1",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "position": [
+        1584,
+        176
+      ],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {},
+      "id": "e3452a34-b82f-4319-9e5f-4fe3062b798a",
+      "name": "When clicking ‘Test workflow’",
+      "type": "n8n-nodes-base.manualTrigger",
+      "position": [
+        -976,
+        -80
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an expert image generation prompt creator. Based on the transcript provided below, divide the video into consecutive scenes. There must be no gaps between scenes — ensure the entire duration of the video is covered. i want more images and each image must be max 5 seconds and must cover whole video duration based on the dataa given so more images more prompts for 60 sec video. Give random duration for each image or scene or prompt according to the script or transcript,\n\nFor each scene, output:\n\nA descriptive image prompt that best represents the content of that scene\n\nThe start time, end time, and duration of the scene (in seconds), formatted like this:\n\nEach duration must have exactly two decimal points of precision\n\nOnly output one prompt per scene. Prioritize visual storytelling, aligning imagery with the spoken content in the transcript. The prompts should be rich, cinematic, and vivid, ideal video content.\n\nHere is the video transcript:\n\n{{ $json.transcript }}",
+        "hasOutputParser": true
+      },
+      "id": "6ebabed2-8b51-4c58-bf84-cd05140a7cfe",
+      "name": "Generate Image Prompts",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "position": [
+        1392,
+        -256
+      ],
+      "typeVersion": 1.5
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "de00ead9-39b9-449e-83ae-9ae7c85d71a2",
+      "name": "Auto-fixing Output Parse",
+      "type": "@n8n/n8n-nodes-langchain.outputParserAutofixing",
+      "position": [
+        1472,
+        -32
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "output",
+        "options": {}
+      },
+      "id": "0284285c-ccde-45f3-a757-29306d610871",
+      "name": "Split Prompts",
+      "type": "n8n-nodes-base.splitOut",
+      "position": [
+        1840,
+        -256
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "6b5b5d77-fd3d-497c-82e5-99fc74f53efb",
+              "name": "Idea",
+              "type": "string",
+              "value": "The Curious Cat’s Adventure Around the Animal Kingdom"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "34db8f65-7ff9-4d30-9768-b7a1adc268a8",
+      "name": "Fields - Set Idea",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        -528,
+        -256
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Idea: {{ $json.Idea }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "Act as a YouTube video scriptwriter and create an engaging, captivating script for a 1-minute video (based on medium-paced speech). The script should attract and retain viewers using elements like storytelling, relatable content, a clear structure, and clever analogies to boost audience engagement.\n\nThe video topic is: (VIDEO IDEA). Use your creativity and expertise to produce a high-quality, informative script that appeals to a wide audience.\n\nInstructions:\n- Only output the script text—no explanations or extra commentary.\n- Use CAPITAL LETTERS and EXCLAMATION MARKS (!) generously to add emotion and emphasis where appropriate."
+            }
+          ]
+        }
+      },
+      "id": "2e780d69-a2b9-4110-a0a7-1882a565305e",
+      "name": "60 Second Script Writer",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "position": [
+        -304,
+        -256
+      ],
+      "typeVersion": 1.5
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "974ee00c-4264-494f-9606-c8b717d1fb09",
+              "name": "text",
+              "type": "string",
+              "value": "={{ $json.text.replace(/(\\r\\n|\\n|\\r)/g, \"\"); }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "693fe5af-f682-4c8c-9282-98ccde769d4d",
+      "name": "Fields - Script Format",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        48,
+        -256
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {}
+      },
+      "id": "b370c9f9-6214-4479-bb64-6f06284b3c3e",
+      "name": "Google Gemini Chat Model 2",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "position": [
+        1408,
+        176
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "EPczj4hsBOaMWEaK",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash",
+        "options": {}
+      },
+      "id": "15eb365d-c178-4afd-81ff-d86f99875d7b",
+      "name": "Google Gemini Chat Model 1",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "position": [
+        -240,
+        -32
+      ],
+      "typeVersion": 1,
+      "credentials": {
+        "googlePalmApi": {
+          "id": "EPczj4hsBOaMWEaK",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "share",
+        "fileId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "={{ $json.id }}"
+        },
+        "permissionsUi": {
+          "permissionsValues": {
+            "role": "reader",
+            "type": "anyone",
+            "allowFileDiscovery": true
+          }
+        },
+        "options": {}
+      },
+      "id": "dc3eaf50-0322-4ca1-9874-07bf59ee703b",
+      "name": "Make Audio File Public",
+      "type": "n8n-nodes-base.googleDrive",
+      "position": [
+        944,
+        -160
+      ],
+      "typeVersion": 3,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "ahdhr0CaEUl0DyfA",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b4e9c4fa-4a5e-47af-9bf6-d81eb2f9aea5",
+              "name": "transcript",
+              "value": "={{ $('Fields - Script Format').item.json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        944,
+        -352
+      ],
+      "id": "c8f8637e-ce78-4e89-9956-2f937d0749b4",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-goog-api-key",
+              "value": "YOUR_API_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ \n  {\n    \"contents\": [\n      {\n        \"parts\": [\n          {\n            \"text\": $json.text\n          }\n        ]\n      }\n    ],\n    \"generationConfig\": {\n      \"responseModalities\": [\"AUDIO\"],\n      \"speechConfig\": {\n        \"voiceConfig\": {\n          \"prebuiltVoiceConfig\": {\n            \"voiceName\": \"Kore\"\n          }\n        }\n      }\n    }\n  }\n}}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        272,
+        -256
+      ],
+      "id": "0f22c4cb-72a2-4490-9350-9d6d4baa0927",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Configurable params\nconst sampleRate = 24000; // Hz\nconst numChannels = 1; // Mono\nconst bitsPerSample = 16;\nconst rawData = $input.first().json.candidates[0].content.parts[0].inlineData.data// Base64\n// Decode base64 to buffer\nconst rawBuffer = Buffer.from(rawData, 'base64');\nconst byteRate = sampleRate * numChannels * bitsPerSample / 8;\nconst blockAlign = numChannels * bitsPerSample / 8;\nconst wavHeaderSize = 44;\nconst dataSize = rawBuffer.length;\nconst fileSize = wavHeaderSize + dataSize - 8;\nconst header = Buffer.alloc(wavHeaderSize);\n// 'RIFF'\nheader.write('RIFF', 0);\n// ChunkSize\nheader.writeUInt32LE(fileSize, 4);\n// 'WAVE'\nheader.write('WAVE', 8);\n// 'fmt '\nheader.write('fmt ', 12);\n// Subchunk1Size (PCM = 16)\nheader.writeUInt32LE(16, 16);\n// AudioFormat (PCM = 1)\nheader.writeUInt16LE(1, 20);\n// NumChannels\nheader.writeUInt16LE(numChannels, 22);\n// SampleRate\nheader.writeUInt32LE(sampleRate, 24);\n// ByteRate\nheader.writeUInt32LE(byteRate, 28);\n// BlockAlign\nheader.writeUInt16LE(blockAlign, 32);\n// BitsPerSample\nheader.writeUInt16LE(bitsPerSample, 34);\n// 'data'\nheader.write('data', 36);\n// Subchunk2Size\nheader.writeUInt32LE(dataSize, 40);\n// Combine header + raw data\nconst wavBuffer = Buffer.concat([header, rawBuffer]);\nreturn [\n{\nbinary: {\nwav: {\ndata: wavBuffer.toString('base64'),\nmimeType: 'audio/mpeg',\nfileName: 'output.mp3'\n}\n}\n}\n];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        496,
+        -256
+      ],
+      "id": "24a9da88-d349-40cc-8ab3-f0ba4c5f4bf9",
+      "name": "Code1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:5678/webhook/image",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "prompt",
+              "value": "={{ $json.prompt }}"
+            }
+          ]
+        },
+        "options": {
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 10000
+            }
+          },
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2064,
+        -256
+      ],
+      "id": "1a5135de-ca93-4eca-b133-aa81b492978d",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "name": "=scene_{{$itemIndex + 1}}.png",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "={{ $('Create folder').item.json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        2288,
+        -256
+      ],
+      "id": "4c9803dd-13ab-4d00-90e1-6f61990dad81",
+      "name": "Upload file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "ahdhr0CaEUl0DyfA",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Convert Google Drive share link to direct-download link\nfunction convertDriveLink(link) {\n    const fileIdMatch = link.match(/[-\\w]{25,}/);\n    if (!fileIdMatch) return link;\n    return `https://drive.google.com/uc?export=download&id=${fileIdMatch[0]}`;\n}\n\n// 1. Get public image links from \"Upload file\" node\nconst images = $items(\"Upload file\", 0).map(item => \n    convertDriveLink(item.json.webContentLink)\n);\n\n// 2. Get timestamps (start & duration) from \"Split Prompts\" node\nconst timestamps = $items(\"Split Prompts\", 0).map(item => ({\n    start: parseFloat(item.json.start_time),\n    duration: parseFloat(item.json.duration)\n}));\n\n// 3. Get audio public link from \"Upload Audio to Drive\" node\nconst audioUrl = convertDriveLink(\n    $('Upload Audio to Drive').first().json.webContentLink\n);\n\n// 4. Build Shotstack clips (variable durations)\nconst clips = images.map((src, i) => ({\n    asset: { type: \"image\", src },\n    start: timestamps[i]?.start || 0,\n    length: timestamps[i]?.duration || 3 // fallback duration if missing\n}));\n\n// 5. Return JSON ready for Shotstack API (no stringify)\nreturn [\n  {\n    json: {\n      timeline: {\n        soundtrack: { src: audioUrl, effect: \"fadeIn\" },\n        tracks: [{ clips }]\n      },\n      output: {\n        format: \"mp4\",\n        resolution: \"sd\"\n      }\n    }\n  }\n];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2736,
+        -256
+      ],
+      "id": "9d21ae4f-7a1a-4ca9-bce7-fe5407a99a1e",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "resource": "folder",
+        "operation": "share",
+        "folderNoRootId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "permissionsUi": {
+          "permissionsValues": {
+            "role": "reader",
+            "type": "anyone",
+            "allowFileDiscovery": true
+          }
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        2512,
+        -256
+      ],
+      "id": "1aa4ab80-e9aa-43a3-bb9a-b2133abe9f6d",
+      "name": "Share folder",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "ahdhr0CaEUl0DyfA",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "folder",
+        "name": "=FaceLess_{{ $now }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "root",
+          "mode": "list",
+          "cachedResultName": "/ (Root folder)",
+          "cachedResultUrl": "https://drive.google.com/drive"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -752,
+        -80
+      ],
+      "id": "b60641d9-f01a-4a4a-986d-8f195f5b29f7",
+      "name": "Create folder",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "ahdhr0CaEUl0DyfA",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.shotstack.io/stage/render",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "YOUR_API_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"timeline\": {{$json.timeline}},\n  \"output\": {{$json.output}}\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2960,
+        -256
+      ],
+      "id": "5d5228c6-29f3-4b5e-ae0a-db20b6655fa9",
+      "name": "HTTP Request2"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.shotstack.io/stage/render/{{ $json.response.id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "0rst248iJBR2PDS2pAr9epAWYLRRny4Ttng9FBiZ"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3184,
+        -256
+      ],
+      "id": "21c272bf-7fb9-4db1-863d-c67cae6fccca",
+      "name": "HTTP Request3"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        3408,
+        -336
+      ],
+      "id": "5705d4af-e218-4b1c-9d4c-8ebae80ed963",
+      "name": "Wait",
+      "webhookId": "c61355c5-47c7-4f0c-942b-099810c5bdc5"
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.response.url }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3856,
+        -256
+      ],
+      "id": "68e60da1-794d-49dc-8e19-30d3197d9a77",
+      "name": "HTTP Request4"
+    },
+    {
+      "parameters": {
+        "name": "Final Video",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        4080,
+        -80
+      ],
+      "id": "4d7fedac-96f0-4fe2-aefc-fa6cac744d35",
+      "name": "Upload file1",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "ahdhr0CaEUl0DyfA",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "97554544-bace-4d72-bdf5-a86e246a82f6",
+              "leftValue": "={{ $json.response.status }}",
+              "rightValue": "done",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        3632,
+        -256
+      ],
+      "id": "5c236830-5d30-4236-896c-6a698ff0c546",
+      "name": "If"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Upload Audio to Drive": {
+      "main": [
+        [
+          {
+            "node": "Make Audio File Public",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Generate Image Prompts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Auto-fixing Output Parse",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Test workflow’": {
+      "main": [
+        [
+          {
+            "node": "Create folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Image Prompts": {
+      "main": [
+        [
+          {
+            "node": "Split Prompts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Auto-fixing Output Parse": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Generate Image Prompts",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fields - Set Idea": {
+      "main": [
+        [
+          {
+            "node": "60 Second Script Writer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "60 Second Script Writer": {
+      "main": [
+        [
+          {
+            "node": "Fields - Script Format",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fields - Script Format": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model 2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Auto-fixing Output Parse",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Generate Image Prompts",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model 1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "60 Second Script Writer",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Make Audio File Public": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Code1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code1": {
+      "main": [
+        [
+          {
+            "node": "Upload Audio to Drive",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Prompts": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Upload file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upload file": {
+      "main": [
+        [
+          {
+            "node": "Share folder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Share folder": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create folder": {
+      "main": [
+        [
+          {
+            "node": "Fields - Set Idea",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Upload file1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request3": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request4": {
+      "main": [
+        [
+          {
+            "node": "Upload file1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request4",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "58ca3982-4d24-42b8-aec6-8cc31fec399a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "06366ea0f74be0a38a9fc6a9ce4a5421002b31da22d353796a8c387376ba995e"
+  },
+  "id": "h1zpgAhHMhsbt4X6",
+  "tags": []
+}
