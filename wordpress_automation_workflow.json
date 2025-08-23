@@ -1,0 +1,169 @@
+{
+  "name": "WordPress Blog Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "interval": "day",
+        "days": 2,
+        "time": "17:00",
+        "timezone": "UTC"
+      },
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "query": "trending topics in AI and technology",
+        "apiKey": "{{ $secrets.tavily_api_key }}",
+        "maxResults": 5
+      },
+      "name": "Tavily Search",
+      "type": "n8n-nodes-base.tavily",
+      "typeVersion": 1,
+      "position": [460, 300],
+      "credentials": {
+        "tavilyApi": {
+          "name": "Tavily API",
+          "apiKey": "{{ $secrets.tavily_api_key }}"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "gemini-pro",
+        "prompt": "Write a 900-1200 word blog post about {{ $node['Tavily Search'].json.results[0].title }}. Use contextual information from {{ $node['Tavily Search'].json.results[0].content }}. Ensure the content is SEO-optimized, engaging, and avoids hallucination by grounding it in the provided context. Format the output with a title as the first line, followed by the blog content in markdown.",
+        "apiKey": "{{ $secrets.gemini_api_key }}"
+      },
+      "name": "Gemini AI Agent",
+      "type": "n8n-nodes-base.aiAgent",
+      "typeVersion": 1,
+      "position": [680, 300],
+      "credentials": {
+        "geminiApi": {
+          "name": "Gemini API",
+          "apiKey": "{{ $secrets.gemini_api_key }}"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "code": "const response = $node['Gemini AI Agent'].json.output;\nconst lines = response.split('\\n');\nconst title = lines[0];\nconst content = lines.slice(1).join('\\n');\nreturn [{ json: { title, content, status: 'publish' } }];"
+      },
+      "name": "Prepare Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 1,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "resource": "post",
+        "operation": "create",
+        "url": "https://your-site.com/wp-json/wp/v2/posts",
+        "authentication": "basicAuth",
+        "postFields": {
+          "values": [
+            { "field": "title", "value": "{{ $node['Prepare Payload'].json.title }}" },
+            { "field": "content", "value": "{{ $node['Prepare Payload'].json.content }}" },
+            { "field": "status", "value": "{{ $node['Prepare Payload'].json.status }}" }
+          ]
+        }
+      },
+      "name": "WordPress Post",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [1120, 300],
+      "credentials": {
+        "httpBasicAuth": {
+          "name": "WordPress Credentials",
+          "username": "{{ $secrets.wordpress_username }}",
+          "password": "{{ $secrets.wordpress_application_password }}"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fromEmail": "your-email@example.com",
+        "toEmail": "recipient@example.com",
+        "subject": "New Blog Post Published: {{ $node['Prepare Payload'].json.title }}",
+        "text": "A new blog post has been successfully published on your WordPress site.\n\nTitle: {{ $node['Prepare Payload'].json.title }}\nStatus: {{ $node['Prepare Payload'].json.status }}\n\nCheck your WordPress dashboard for details."
+      },
+      "name": "Send Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [1340, 300],
+      "credentials": {
+        "smtp": {
+          "name": "SMTP Credentials",
+          "host": "{{ $secrets.smtp_host }}",
+          "port": "{{ $secrets.smtp_port }}",
+          "username": "{{ $secrets.smtp_username }}",
+          "password": "{{ $secrets.smtp_password }}"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Tavily Search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tavily Search": {
+      "main": [
+        [
+          {
+            "node": "Gemini AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Prepare Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Payload": {
+      "main": [
+        [
+          {
+            "node": "WordPress Post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WordPress Post": {
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "timezone": "UTC",
+    "saveExecutionProgress": true
+  }
+}
