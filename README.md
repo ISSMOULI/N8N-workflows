@@ -1,2 +1,2 @@
 N8N -Workflows:
-AI- auto blogging 
+AI- auto blogging, weather summarizer,
