@@ -1,0 +1,204 @@
+{
+  "name": "Images Gen Webhook",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "image",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "bd919ff4-1555-4ea4-b89c-fd2b8f4edd96",
+      "name": "Webhook",
+      "webhookId": "05dec281-3e1f-4649-b53a-8a3bf2cadc00"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key=YOUR_API_KEY",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"contents\": [{\n      \"parts\": [\n        {\"text\": \"{{ $json.body.prompt }}\"}\n      ]\n    }],\n    \"generationConfig\":{\"responseModalities\":[\"TEXT\",\"IMAGE\"]}\n  }",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "99b0dc27-9c2a-46d2-a1ac-db240338a2fe",
+      "name": "HTTP Request",
+      "retryOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "return items.map(item => {\n  const responseData = item.json.data;\n  if (responseData && responseData.candidates && responseData.candidates.length > 0) {\n    const imageData = responseData.candidates[0].content.parts[0].inlineData.data;\n    const mimeType = responseData.candidates[0].content.parts[0].inlineData.mimeType;\n\n    // n8n expects binary data to be in a specific format for file handling\n    // We’ll add it to the binary property of the item\n    item.binary = item.binary || {};\n    item.binary.image = {\n      data: imageData, // This is the base64 encoded string\n      mimeType: mimeType,\n      fileName: \"gemini-generated-image.png\", // Or whatever you want to name it\n    };\n\n    // You might also want to keep the text part if available\n    const textPart = responseData.candidates[0].content.parts.find(part => part.text);\n    if (textPart) {\n      item.json.generatedText = textPart.text;\n    }\n\n    return item;\n  } else {\n    // Handle cases where no image data is found\n    console.warn(\"No image data found in the response.\");\n    return item;\n  }\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "id": "09dd8d41-5cba-4484-8d2d-292ca6c650ba",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "candidates[0].content.parts[1].inlineData.data",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        672,
+        0
+      ],
+      "id": "36bbe43a-da5f-472a-bc4e-d1abf615a05a",
+      "name": "Convert to File",
+      "retryOnFail": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "respondWith": "binary",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        1120,
+        0
+      ],
+      "id": "7c618bad-5b0a-470d-a3be-52c79b6fd785",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "2abf57be-1e9b-488f-b5d8-666a45816400",
+              "leftValue": "={{ $binary.data.fileSize }}",
+              "rightValue": "0",
+              "operator": {
+                "type": "string",
+                "operation": "notStartsWith"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        896,
+        0
+      ],
+      "id": "6e8eb271-233b-483f-8abb-f09f013486e1",
+      "name": "If"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "a4658572-0084-4d93-8f86-b78b19131ddb",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "06366ea0f74be0a38a9fc6a9ce4a5421002b31da22d353796a8c387376ba995e"
+  },
+  "id": "gUsT26uBRuIHG5Cr",
+  "tags": []
+}
