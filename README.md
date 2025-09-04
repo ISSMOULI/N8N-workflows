@@ -1,1 +1,2 @@
-N8N workflow
+N8N workflow,
+ AI Automation
